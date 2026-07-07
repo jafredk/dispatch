@@ -22,12 +22,12 @@ interface Dispatch {
   reasons: string
   authorizingOfficer: string
   confirmationOfficer: string
-  createdAt: any
+  createdAt: unknown
   createdBy: string
   createdByEmail: string
   status?: string
   reviewedBy?: string
-  reviewedAt?: any
+  reviewedAt?: unknown
   reviewNote?: string
 }
 
@@ -66,7 +66,9 @@ export default function ViewDispatchesPage() {
       Object.values(gatepassUrls).forEach((url) => {
         try {
           URL.revokeObjectURL(url)
-        } catch {}
+        } catch {
+          // Ignore URL revocation errors
+        }
       })
     }
   }, [gatepassUrls])
@@ -116,7 +118,7 @@ export default function ViewDispatchesPage() {
     if (gatepassUrls[dispatch.id]) return
     setGeneratingGatepass(dispatch.id)
     try {
-      const url = await generateGatepassPdf(dispatch)
+      const url = await generateGatepassPdf(dispatch as unknown as Record<string, unknown>)
       if (url) {
         setGatepassUrls((prev) => ({ ...prev, [dispatch.id]: url }))
       }

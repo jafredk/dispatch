@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { collection, getDocs } from 'firebase/firestore'
-import { onAuthStateChanged, User } from 'firebase/auth'
+import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
+import { safeImport } from '@/lib/gatepass'
 import LogoutButton from '@/components/LogoutButton'
 
 interface DispatchRecord {
@@ -33,8 +34,6 @@ const searchFields = [
 ]
 
 export default function SearchPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [authLoaded, setAuthLoaded] = useState(false)
   const [searchKey, setSearchKey] = useState('dispatchedBy')
   const [searchTerm, setSearchTerm] = useState('')
   const [results, setResults] = useState<DispatchRecord[]>([])
@@ -45,50 +44,11 @@ export default function SearchPage() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const router = useRouter()
 
-  // Safe dynamic import that avoids Webpack static analysis and provides a CDN fallback
-  const safeImport = async (moduleName: string, cdnUrl?: string): Promise<any> => {
-    if (typeof window === 'undefined') throw new Error('safeImport only available in browser')
-    try {
-      // Use new Function to avoid bundler/static analysis of import()
-      // eslint-disable-next-line no-new-func
-      const importer = new Function('name', 'return import(name)')
-      return await importer(moduleName)
-    } catch (err) {
-      if (!cdnUrl) throw err
-      // Load from CDN as a fallback
-      await new Promise<void>((resolve, reject) => {
-        const existing = document.querySelector(`script[data-src="${cdnUrl}"]`)
-        if (existing) return resolve()
-        const s = document.createElement('script')
-        s.setAttribute('data-src', cdnUrl)
-        s.src = cdnUrl
-        s.onload = () => resolve()
-        s.onerror = () => reject(new Error('CDN load failed'))
-        document.head.appendChild(s)
-      })
-
-      // Resolve common globals for known libraries
-      if (moduleName === 'jspdf') {
-        // jspdf UMD exposes window.jspdf or window.jsPDF
-        const win: any = window as any
-        return { jsPDF: win.jspdf?.jsPDF || win.jsPDF || win.jspdf }
-      }
-      if (moduleName === 'html2canvas') {
-        const win: any = window as any
-        return win.html2canvas
-      }
-      return null
-    }
-  }
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.push('/login')
-      } else {
-        setUser(currentUser)
       }
-      setAuthLoaded(true)
     })
     return () => unsubscribe()
   }, [router])
@@ -104,12 +64,12 @@ export default function SearchPage() {
       const snapshot = await getDocs(collection(db, 'dispatches'))
       const data: DispatchRecord[] = []
       snapshot.forEach((doc) => {
-        const docData = doc.data() as DispatchRecord
+        const docData = doc.data() as Omit<DispatchRecord, 'id'>
         data.push({ id: doc.id, ...docData })
       })
 
       const filtered = data.filter((record) => {
-        const value = String((record as any)[searchKey] ?? '').toLowerCase()
+        const value = String((record[searchKey as keyof DispatchRecord] ?? '')).toLowerCase()
         return value.includes(searchTerm.toLowerCase().trim())
       })
       setResults(filtered)
@@ -134,9 +94,9 @@ export default function SearchPage() {
   const generateGatepassPdf = async (record: DispatchRecord) => {
     setPdfLoading(true)
     try {
-      const jsPdfModule: any = await safeImport('jspdf', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')
-      const html2canvas: any = (await safeImport('html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js')) || (window as any).html2canvas
-      const jsPDF: any = jsPdfModule?.jsPDF || jsPdfModule?.default?.jsPDF || (window as any).jsPDF || jsPdfModule
+      const jsPdfModule = await safeImport('jspdf', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')
+      const html2canvas = (await safeImport('html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js')) || (window as unknown as Record<string, unknown>).html2canvas
+      const jsPDF = (jsPdfModule as Record<string, unknown>)?.jsPDF || ((jsPdfModule as Record<string, unknown>)?.default as Record<string, unknown>)?.jsPDF || (window as unknown as Record<string, unknown>).jsPDF || jsPdfModule
       const htmlString = buildGatepassHtml(record)
       const parsed = new DOMParser().parseFromString(htmlString, 'text/html')
       const container = document.createElement('div')
@@ -155,9 +115,10 @@ export default function SearchPage() {
       })
       document.body.appendChild(container)
 
-      const canvas = await (html2canvas as any)(container, { scale: 2, useCORS: true })
+      const canvas = await (html2canvas as (el: HTMLElement, opts: Record<string, unknown>) => Promise<HTMLCanvasElement>)(container, { scale: 2, useCORS: true })
       const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF({ unit: 'px', format: 'a4' })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdf = new (jsPDF as any)({ unit: 'px', format: 'a4' })
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
       const targetHeight = pageHeight * 0.74
@@ -307,7 +268,7 @@ export default function SearchPage() {
                           <div className="text-sm font-semibold text-slate-900">{record.item || 'No item name'}</div>
                           <div className="text-xs text-slate-500">{record.dispatchDate || 'No date'}</div>
                         </div>
-                        <div className="text-xs text-slate-500">{record[searchKey]}</div>
+                        <div className="text-xs text-slate-500">{record[searchKey as keyof DispatchRecord]}</div>
                       </div>
                     </button>
                   ))}

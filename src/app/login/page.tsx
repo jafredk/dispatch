@@ -25,9 +25,9 @@ export default function LoginPage() {
 
       await signInWithEmailAndPassword(auth, email, password)
       router.push('/main')
-    } catch (err: any) {
-      const message = err?.message || 'Login failed. Please try again.'
-      setError(message)
+    } catch (err: unknown) {
+      const message = (err as Record<string, unknown>)?.message || 'Login failed. Please try again.'
+      setError(message as string)
       console.error('Firebase sign-in error:', err)
     } finally {
       setIsLoading(false)

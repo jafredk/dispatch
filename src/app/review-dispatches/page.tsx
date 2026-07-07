@@ -67,7 +67,7 @@ export default function ReviewDispatchesPage() {
       const querySnapshot = await getDocs(q)
       const data: Dispatch[] = []
       querySnapshot.forEach((docSnap) => {
-        const docData = docSnap.data() as Dispatch
+        const docData = docSnap.data() as Omit<Dispatch, 'id'>
         if (!docData.status || docData.status === 'pending') {
           data.push({ id: docSnap.id, ...docData })
         }

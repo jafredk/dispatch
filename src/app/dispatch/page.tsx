@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
+import { escapeHtml, safeImport } from '@/lib/gatepass'
 import LogoutButton from '@/components/LogoutButton'
 
 const initialValues = {
@@ -34,32 +35,6 @@ export default function DispatchPage() {
     })
     return () => unsubscribe()
   }, [])
-
-  // Safe dynamic import to avoid bundler resolving missing modules; CDN fallback
-  const safeImport = async (moduleName: string, cdnUrl?: string): Promise<any> => {
-    if (typeof window === 'undefined') throw new Error('safeImport only available in browser')
-    try {
-      // eslint-disable-next-line no-new-func
-      const importer = new Function('name', 'return import(name)')
-      return await importer(moduleName)
-    } catch (err) {
-      if (!cdnUrl) throw err
-      await new Promise<void>((resolve, reject) => {
-        const existing = document.querySelector(`script[data-src="${cdnUrl}"]`)
-        if (existing) return resolve()
-        const s = document.createElement('script')
-        s.setAttribute('data-src', cdnUrl)
-        s.src = cdnUrl
-        s.onload = () => resolve()
-        s.onerror = () => reject(new Error('CDN load failed'))
-        document.head.appendChild(s)
-      })
-      const win: any = window as any
-      if (moduleName === 'jspdf') return { jsPDF: win.jspdf?.jsPDF || win.jsPDF || win.jspdf }
-      if (moduleName === 'html2canvas') return win.html2canvas
-      return null
-    }
-  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({
@@ -100,11 +75,11 @@ export default function DispatchPage() {
   }
 
   // Generate gatepass PDF using jspdf + html2canvas if available; fallback to printable window
-  const generateGatepass = async (data: any) => {
+  const generateGatepass = async (data: Record<string, unknown>) => {
     try {
-      const jsPdfModule: any = await safeImport('jspdf', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')
-      const html2canvas: any = (await safeImport('html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js')) || (window as any).html2canvas
-      const jsPDF: any = jsPdfModule?.jsPDF || jsPdfModule?.default?.jsPDF || (window as any).jsPDF || jsPdfModule
+      const jsPdfModule = await safeImport('jspdf', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')
+      const html2canvas = (await safeImport('html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js')) || (window as unknown as Record<string, unknown>).html2canvas
+      const jsPDF = (jsPdfModule as Record<string, unknown>)?.jsPDF || ((jsPdfModule as Record<string, unknown>)?.default as Record<string, unknown>)?.jsPDF || (window as unknown as Record<string, unknown>).jsPDF || jsPdfModule
 
       // Create a temporary element with gatepass markup
       const container = document.createElement('div')
@@ -127,32 +102,32 @@ export default function DispatchPage() {
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;font-size:13px;line-height:1.45;margin-bottom:10px;">
-            <div><strong>Dispatched By:</strong> ${escapeHtml(data.dispatchedBy || '')}</div>
-            <div><strong>Department:</strong> ${escapeHtml(data.departmentFrom || '')}</div>
-            <div><strong>Serial No:</strong> ${escapeHtml(data.serialNumber || '')}</div>
-            <div><strong>Tag No:</strong> ${escapeHtml(data.tagNumber || '')}</div>
-            <div><strong>Date:</strong> ${escapeHtml(data.dispatchDate || '')}</div>
-            <div><strong>Destination:</strong> ${escapeHtml(data.destination || '')}</div>
+            <div><strong>Dispatched By:</strong> ${escapeHtml(String(data.dispatchedBy || ''))}</div>
+            <div><strong>Department:</strong> ${escapeHtml(String(data.departmentFrom || ''))}</div>
+            <div><strong>Serial No:</strong> ${escapeHtml(String(data.serialNumber || ''))}</div>
+            <div><strong>Tag No:</strong> ${escapeHtml(String(data.tagNumber || ''))}</div>
+            <div><strong>Date:</strong> ${escapeHtml(String(data.dispatchDate || ''))}</div>
+            <div><strong>Destination:</strong> ${escapeHtml(String(data.destination || ''))}</div>
           </div>
 
           <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin:8px 0 10px;">
             <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Item</div>
-            <div style="font-size:13px;">${escapeHtml(data.item || '')}</div>
+            <div style="font-size:13px;">${escapeHtml(String(data.item || ''))}</div>
           </div>
 
           <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin-bottom:10px;">
             <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Reasons for Dispatch</div>
-            <div style="font-size:13px;white-space:pre-wrap;">${escapeHtml(data.reasons || '')}</div>
+            <div style="font-size:13px;white-space:pre-wrap;">${escapeHtml(String(data.reasons || ''))}</div>
           </div>
 
           <div style="display:flex;justify-content:space-between;gap:16px;margin-top:12px;border-top:1px dashed #cbd5e1;padding-top:10px;">
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Authorizing Officer</div>
-              <div style="font-size:13px;">${escapeHtml(data.authorizingOfficer || '')}</div>
+              <div style="font-size:13px;">${escapeHtml(String(data.authorizingOfficer || ''))}</div>
             </div>
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Confirmation Officer</div>
-              <div style="font-size:13px;">${escapeHtml(data.confirmationOfficer || '')}</div>
+              <div style="font-size:13px;">${escapeHtml(String(data.confirmationOfficer || ''))}</div>
             </div>
           </div>
 
@@ -167,9 +142,10 @@ export default function DispatchPage() {
 
       document.body.appendChild(container)
 
-      const canvas = await (html2canvas as any)(container, { scale: 2, useCORS: true })
+      const canvas = await (html2canvas as (el: HTMLElement, opts: Record<string, unknown>) => Promise<HTMLCanvasElement>)(container, { scale: 2, useCORS: true })
       const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF({ unit: 'px', format: 'a4' })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdf = new (jsPDF as any)({ unit: 'px', format: 'a4' })
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
       const targetHeight = pageHeight * 0.74
@@ -186,7 +162,7 @@ export default function DispatchPage() {
 
       // cleanup
       document.body.removeChild(container)
-    } catch (err) {
+    } catch {
       // fallback: open a printable window with HTML
       const html = buildGatepassHtml(data)
       const w = window.open('', '_blank')
@@ -197,12 +173,8 @@ export default function DispatchPage() {
     }
   }
 
-  const buildGatepassHtml = (data: any) => {
+  const buildGatepassHtml = (data: Record<string, unknown>) => {
     return `<!doctype html><html><head><meta charset="utf-8"><title>Gatepass</title><style>body{font-family:Arial,Helvetica,sans-serif;color:#111827;padding:24px;background:#f8fafc}.card{position:relative;border:2px solid #0f766e;padding:24px;border-radius:14px;background:linear-gradient(180deg,#fff 0%,#f9fafb 100%);max-width:760px;margin:0 auto;box-shadow:0 8px 30px rgba(15,23,42,.08);overflow:hidden}.watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.08;font-size:120px;font-weight:800;color:#0f766e;transform:rotate(-25deg);pointer-events:none}.header{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid #0f766e;padding-bottom:10px;margin-bottom:14px}.logo{width:58px;height:58px;border-radius:50%;border:2px solid #0f766e;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#0f766e;background:#ecfeff}.title{flex:1;text-align:center}.title1{font-size:17px;font-weight:700;color:#0f766e;letter-spacing:1px}.title2{font-size:14px;font-weight:600;margin-top:4px;color:#374151}.badge{width:58px;height:58px;border-radius:50%;border:2px dashed #0f766e;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0f766e;text-align:center;line-height:1.1}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;font-size:13px;line-height:1.45}.box{border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin:10px 0 12px}.label{font-size:13px;font-weight:700;color:#111827;margin-bottom:6px}.footer{margin-top:12px;border-top:1px solid #e5e7eb;padding-top:10px;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;color:#6b7280}.signature{width:140px;height:44px;border-top:1px solid #111827;margin-top:6px}</style></head><body><div class="card"><div class="watermark">COOP</div><div class="header"><div class="logo">COOP</div><div class="title"><div class="title1">THE CO-OPERATIVE BANK OF KENYA LTD</div><div class="title2">GATEPASS / DISPATCH NOTE</div></div><div class="badge">OFFICIAL</div></div><div class="grid"><div><strong>Dispatched By:</strong> ${escapeHtml(data.dispatchedBy||'')}</div><div><strong>Department:</strong> ${escapeHtml(data.departmentFrom||'')}</div><div><strong>Serial No:</strong> ${escapeHtml(data.serialNumber||'')}</div><div><strong>Tag No:</strong> ${escapeHtml(data.tagNumber||'')}</div><div><strong>Date:</strong> ${escapeHtml(data.dispatchDate||'')}</div><div><strong>Destination:</strong> ${escapeHtml(data.destination||'')}</div></div><div class="box"><div class="label">Item</div><div>${escapeHtml(data.item||'')}</div></div><div class="box"><div class="label">Reasons for Dispatch</div><div>${escapeHtml(data.reasons||'')}</div></div><div style="display:flex;justify-content:space-between;gap:16px;margin-top:12px;border-top:1px dashed #cbd5e1;padding-top:10px"><div style="flex:1"><div class="label">Authorizing Officer</div><div>${escapeHtml(data.authorizingOfficer||'')}</div></div><div style="flex:1"><div class="label">Confirmation Officer</div><div>${escapeHtml(data.confirmationOfficer||'')}</div></div></div><div class="footer"><div>Generated electronically • Print-ready gatepass</div><div style="text-align:right"><div style="font-weight:700;color:#111827">Signature</div><div class="signature"></div></div></div></div><script>window.onload = ()=>{window.print()}</script></body></html>`
-  }
-
-  const escapeHtml = (unsafe: string) => {
-    return (unsafe || '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&apos;', '"': '&quot;' }[c] as string))
   }
 
   // cleanup generated object URL on unmount or change
@@ -211,7 +183,9 @@ export default function DispatchPage() {
       if (gatepassUrl) {
         try {
           URL.revokeObjectURL(gatepassUrl)
-        } catch {}
+        } catch {
+          // Ignore URL revocation errors
+        }
       }
     }
   }, [gatepassUrl])
@@ -239,7 +213,9 @@ export default function DispatchPage() {
       w.onload = () => {
         try {
           w.print()
-        } catch (e) {}
+        } catch {
+          // Ignore print errors
+        }
       }
     } else {
       alert('Popup blocked. Please open the gatepass and print manually.')

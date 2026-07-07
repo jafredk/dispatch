@@ -23,7 +23,7 @@ interface ApprovedDispatch {
   status: string
   approvedBy?: string
   approvedDate?: string
-  createdAt: any
+  createdAt: unknown
   createdBy: string
   createdByEmail: string
 }
@@ -60,7 +60,7 @@ export default function ViewApprovedPage() {
       const querySnapshot = await getDocs(q)
       const data: ApprovedDispatch[] = []
       querySnapshot.forEach((doc) => {
-        const docData = doc.data() as ApprovedDispatch
+        const docData = doc.data() as Omit<ApprovedDispatch, 'id'>
         if (docData.status === 'approved' || docData.status === 'rejected') {
           data.push({ id: doc.id, ...docData })
         }
