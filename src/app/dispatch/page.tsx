@@ -340,9 +340,9 @@ export default function DispatchPage() {
                 value={form.item}
                 onChange={handleChange}
                 className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                placeholder="Enter one item per line. Use Item Name | Serial Number for each line."
+                placeholder="Enter one item per line as: Item Name | Tag Number | Serial Number"
               />
-              <p className="mt-2 text-xs text-slate-500">Example: Laptop Bag | SN-12345</p>
+              <p className="mt-2 text-xs text-slate-500">Example: Laptop Bag | TG-1001 | SN-12345</p>
             </label>
           </div>
 

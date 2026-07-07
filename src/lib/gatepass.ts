@@ -18,17 +18,18 @@ export const escapeHtml = (unsafe: unknown) => {
 export const normalizeItems = (value: unknown) => {
   const raw = String(value || '')
   return raw
-    .split(/\r?\n|\s*[,;]\s*/)
+    .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean)
 }
 
 export const normalizeItemEntries = (value: unknown) => {
   return normalizeItems(value).map((item) => {
-    const [name, ...serialParts] = item.split(/\s*\|\s*|\s+-\s+/)
+    const parts = item.split(/\s*\|\s*/).map((part) => part.trim())
     return {
-      name: name.trim(),
-      serial: serialParts.join(' - ').trim()
+      name: parts[0] || '',
+      tagNumber: parts[1] || '',
+      serialNumber: parts[2] || ''
     }
   })
 }
@@ -39,9 +40,29 @@ export const renderItemsHtml = (value: unknown) => {
     return '<div style="font-size:13px;">No items listed</div>'
   }
 
-  return `<ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.55;">${items
-    .map((item) => `<li>${escapeHtml(item.name)}${item.serial ? ` <span style="color:#6b7280;">(Serial: ${escapeHtml(item.serial)})</span>` : ''}</li>`)
-    .join('')}</ul>`
+  return `
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="background:#f8fafc;">
+          <th style="border:1px solid #d1d5db;padding:8px 10px;text-align:left;font-size:12px;letter-spacing:.02em;text-transform:uppercase;">Item Name</th>
+          <th style="border:1px solid #d1d5db;padding:8px 10px;text-align:left;font-size:12px;letter-spacing:.02em;text-transform:uppercase;">Tag Number</th>
+          <th style="border:1px solid #d1d5db;padding:8px 10px;text-align:left;font-size:12px;letter-spacing:.02em;text-transform:uppercase;">Serial Number</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items
+          .map(
+            (item) => `
+              <tr>
+                <td style="border:1px solid #d1d5db;padding:8px 10px;vertical-align:top;">${escapeHtml(item.name || '—')}</td>
+                <td style="border:1px solid #d1d5db;padding:8px 10px;vertical-align:top;">${escapeHtml(item.tagNumber || '—')}</td>
+                <td style="border:1px solid #d1d5db;padding:8px 10px;vertical-align:top;">${escapeHtml(item.serialNumber || '—')}</td>
+              </tr>
+            `
+          )
+          .join('')}
+      </tbody>
+    </table>`
 }
 
 export const buildGatepassHtml = (data: Record<string, unknown>) => {
