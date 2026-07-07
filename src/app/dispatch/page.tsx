@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { escapeHtml, normalizeItems, safeImport } from '@/lib/gatepass'
+import { escapeHtml, renderItemsHtml, safeImport } from '@/lib/gatepass'
 import LogoutButton from '@/components/LogoutButton'
 
 const initialValues = {
@@ -122,9 +122,7 @@ export default function DispatchPage() {
 
           <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin:8px 0 10px;">
             <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Items</div>
-            <div style="font-size:13px;line-height:1.55;">
-              ${normalizeItems(data.item).length ? `<ul style="margin:0;padding-left:18px;">${normalizeItems(data.item).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<div>No items listed</div>'}
-            </div>
+            <div style="font-size:13px;line-height:1.55;">${renderItemsHtml(data.item)}</div>
           </div>
 
           <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin-bottom:10px;">
@@ -338,9 +336,9 @@ export default function DispatchPage() {
                 value={form.item}
                 onChange={handleChange}
                 className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                placeholder="Enter one item per line or separate with commas"
+                placeholder="Enter one item per line. Use Item Name | Serial Number for each line."
               />
-              <p className="mt-2 text-xs text-slate-500">Each line will appear as a separate item on the gatepass.</p>
+              <p className="mt-2 text-xs text-slate-500">Example: Laptop Bag | SN-12345</p>
             </label>
           </div>
 

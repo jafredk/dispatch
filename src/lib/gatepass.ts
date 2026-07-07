@@ -23,14 +23,24 @@ export const normalizeItems = (value: unknown) => {
     .filter(Boolean)
 }
 
-const renderItemsHtml = (value: unknown) => {
-  const items = normalizeItems(value)
+export const normalizeItemEntries = (value: unknown) => {
+  return normalizeItems(value).map((item) => {
+    const [name, ...serialParts] = item.split(/\s*\|\s*|\s+-\s+/)
+    return {
+      name: name.trim(),
+      serial: serialParts.join(' - ').trim()
+    }
+  })
+}
+
+export const renderItemsHtml = (value: unknown) => {
+  const items = normalizeItemEntries(value)
   if (!items.length) {
     return '<div style="font-size:13px;">No items listed</div>'
   }
 
   return `<ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.55;">${items
-    .map((item) => `<li>${escapeHtml(item)}</li>`)
+    .map((item) => `<li>${escapeHtml(item.name)}${item.serial ? ` <span style="color:#6b7280;">(Serial: ${escapeHtml(item.serial)})</span>` : ''}</li>`)
     .join('')}</ul>`
 }
 
