@@ -2,8 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { OAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+
+const microsoftProvider = new OAuthProvider('microsoft.com')
+microsoftProvider.setCustomParameters({ prompt: 'select_account' })
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -33,6 +36,27 @@ export default function LoginPage() {
       const message = (err as Record<string, unknown>)?.message || 'Login failed. Please try again.'
       setError(message as string)
       console.error('Firebase sign-in error:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleMicrosoftSignIn = async () => {
+    setError('')
+    setIsLoading(true)
+
+    try {
+      if (!auth) {
+        setError('Firebase is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars in Vercel.')
+        return
+      }
+
+      await signInWithPopup(auth, microsoftProvider)
+      router.push('/main')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Microsoft sign-in failed. Please try again.'
+      setError(message)
+      console.error('Microsoft sign-in error:', err)
     } finally {
       setIsLoading(false)
     }
@@ -90,6 +114,15 @@ export default function LoginPage() {
               className="w-full rounded-2xl bg-green-900 px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleMicrosoftSignIn}
+              disabled={isLoading}
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Signing in...' : 'Continue with Microsoft'}
             </button>
           </form>
 
