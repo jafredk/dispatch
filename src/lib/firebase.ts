@@ -12,6 +12,21 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 }
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
-export const auth = getAuth(app)
-export const db = getFirestore(app)
+const hasRequiredFirebaseConfig = Boolean(
+  firebaseConfig.apiKey &&
+    firebaseConfig.authDomain &&
+    firebaseConfig.projectId &&
+    firebaseConfig.storageBucket &&
+    firebaseConfig.messagingSenderId &&
+    firebaseConfig.appId
+)
+
+const app = hasRequiredFirebaseConfig
+  ? !getApps().length
+    ? initializeApp(firebaseConfig)
+    : getApp()
+  : null
+
+// Avoid initializing auth during server prerender when env vars may be missing.
+export const auth = app && typeof window !== 'undefined' ? getAuth(app) : null
+export const db = app ? getFirestore(app) : null

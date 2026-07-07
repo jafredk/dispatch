@@ -44,6 +44,10 @@ export default function ViewDispatchesPage() {
   const isReviewer = isReviewerEmail(user?.email)
 
   useEffect(() => {
+    if (!auth) {
+      setAuthLoaded(true)
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.push('/login')
@@ -74,6 +78,7 @@ export default function ViewDispatchesPage() {
   }, [gatepassUrls])
 
   const fetchDispatches = async () => {
+    if (!db) return
     try {
       setLoading(true)
       const q = query(collection(db, 'dispatches'))
@@ -91,7 +96,7 @@ export default function ViewDispatchesPage() {
   }
 
   const handleReview = async (dispatchId: string, action: 'approved' | 'rejected') => {
-    if (!user) return
+    if (!user || !db) return
     try {
       setReviewingId(dispatchId)
       const note = reviewNotes[dispatchId] || (action === 'approved' ? 'Approved by reviewer' : 'Rejected by reviewer')

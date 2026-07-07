@@ -16,6 +16,7 @@ export default function LogoutButton({ className = '', label = 'Logout' }: Logou
 
   const handleLogout = async () => {
     if (loading) return
+    if (!auth) return
     setLoading(true)
 
     try {

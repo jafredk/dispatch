@@ -18,6 +18,10 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
+      if (!auth) {
+        setError('Firebase is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars in Vercel.')
+        return
+      }
       if (!email || !password) {
         setError('Please fill in all fields')
         return

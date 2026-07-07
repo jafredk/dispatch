@@ -36,6 +36,10 @@ export default function ViewApprovedPage() {
   const router = useRouter()
 
   useEffect(() => {
+    if (!auth) {
+      setAuthLoaded(true)
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.push('/login')
@@ -54,6 +58,7 @@ export default function ViewApprovedPage() {
   }, [user])
 
   const fetchApprovedDispatches = async () => {
+    if (!db) return
     try {
       setLoading(true)
       const q = query(collection(db, 'dispatches'))

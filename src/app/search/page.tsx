@@ -45,6 +45,9 @@ export default function SearchPage() {
   const router = useRouter()
 
   useEffect(() => {
+    if (!auth) {
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.push('/login')
@@ -54,6 +57,12 @@ export default function SearchPage() {
   }, [router])
 
   const fetchDispatches = async () => {
+    if (!db) {
+      setResults([])
+      setSelectedRecord(null)
+      setGatepassHtml('')
+      return
+    }
     if (!searchTerm.trim()) {
       setResults([])
       return

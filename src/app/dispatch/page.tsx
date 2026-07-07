@@ -29,6 +29,11 @@ export default function DispatchPage() {
   const [gatepassUrl, setGatepassUrl] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!auth) {
+      setStatus({ type: 'error', message: 'Firebase is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars.' })
+      setAuthLoaded(true)
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
       setAuthLoaded(true)
@@ -45,6 +50,11 @@ export default function DispatchPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    if (!db) {
+      setStatus({ type: 'error', message: 'Database is not configured. Check Firebase environment variables.' })
+      return
+    }
 
     if (!user) {
       setStatus({ type: 'error', message: 'You must be signed in to save dispatch details.' })

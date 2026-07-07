@@ -14,6 +14,10 @@ export default function MainPage() {
   const router = useRouter()
 
   useEffect(() => {
+    if (!auth) {
+      setAuthLoaded(true)
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.push('/login')

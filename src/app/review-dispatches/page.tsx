@@ -39,6 +39,10 @@ export default function ReviewDispatchesPage() {
   const router = useRouter()
 
   useEffect(() => {
+    if (!auth) {
+      setAuthLoaded(true)
+      return
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.push('/login')
@@ -61,6 +65,7 @@ export default function ReviewDispatchesPage() {
   }, [router, user])
 
   const fetchDispatches = async () => {
+    if (!db) return
     try {
       setLoading(true)
       const q = query(collection(db, 'dispatches'))
@@ -81,7 +86,7 @@ export default function ReviewDispatchesPage() {
   }
 
   const handleReview = async (dispatchId: string, action: 'approved' | 'rejected') => {
-    if (!user) return
+    if (!user || !db) return
     try {
       setReviewingId(dispatchId)
       const note = reviewNotes[dispatchId] || (action === 'approved' ? 'Approved by reviewer' : 'Rejected by reviewer')
