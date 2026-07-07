@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { escapeHtml, safeImport } from '@/lib/gatepass'
+import { escapeHtml, normalizeItems, safeImport } from '@/lib/gatepass'
 import LogoutButton from '@/components/LogoutButton'
 
 const initialValues = {
@@ -121,8 +121,10 @@ export default function DispatchPage() {
           </div>
 
           <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin:8px 0 10px;">
-            <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Item</div>
-            <div style="font-size:13px;">${escapeHtml(String(data.item || ''))}</div>
+            <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Items</div>
+            <div style="font-size:13px;line-height:1.55;">
+              ${normalizeItems(data.item).length ? `<ul style="margin:0;padding-left:18px;">${normalizeItems(data.item).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<div>No items listed</div>'}
+            </div>
           </div>
 
           <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin-bottom:10px;">
@@ -328,16 +330,17 @@ export default function DispatchPage() {
               />
             </label>
 
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Item</span>
-              <input
-                type="text"
+            <label className="block md:col-span-2">
+              <span className="text-sm font-semibold text-slate-700">Items</span>
+              <textarea
                 name="item"
+                rows={4}
                 value={form.item}
                 onChange={handleChange}
                 className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                placeholder="Enter item"
+                placeholder="Enter one item per line or separate with commas"
               />
+              <p className="mt-2 text-xs text-slate-500">Each line will appear as a separate item on the gatepass.</p>
             </label>
           </div>
 
