@@ -122,7 +122,7 @@ export default function DispatchPage() {
 
           <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin:8px 0 10px;">
             <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Items</div>
-            <div style="font-size:13px;line-height:1.55;">${renderItemsHtml(data.item)}</div>
+            <div style="font-size:13px;line-height:1.55;">${renderItemsHtml(data.item, data.tagNumber, data.serialNumber)}</div>
           </div>
 
           <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin-bottom:10px;">
@@ -285,28 +285,43 @@ export default function DispatchPage() {
               />
             </label>
 
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Serial Number</span>
-              <input
-                type="text"
-                name="serialNumber"
-                value={form.serialNumber}
+            <label className="block md:col-span-2">
+              <span className="text-sm font-semibold text-slate-700">Items</span>
+              <textarea
+                name="item"
+                rows={4}
+                value={form.item}
                 onChange={handleChange}
                 className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                placeholder="Enter serial number"
+                placeholder="Enter one item name per line"
               />
+              <p className="mt-2 text-xs text-slate-500">Each line maps to the Item Name column on the gatepass table.</p>
             </label>
 
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Tag Number</span>
-              <input
-                type="text"
+            <label className="block md:col-span-2">
+              <span className="text-sm font-semibold text-slate-700">Tag Numbers</span>
+              <textarea
                 name="tagNumber"
+                rows={4}
                 value={form.tagNumber}
                 onChange={handleChange}
                 className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                placeholder="Enter tag number"
+                placeholder="Enter one tag number per line"
               />
+              <p className="mt-2 text-xs text-slate-500">Line 1 maps to item 1, line 2 maps to item 2, and so on.</p>
+            </label>
+
+            <label className="block md:col-span-2">
+              <span className="text-sm font-semibold text-slate-700">Serial Numbers</span>
+              <textarea
+                name="serialNumber"
+                rows={4}
+                value={form.serialNumber}
+                onChange={handleChange}
+                className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                placeholder="Enter one serial number per line"
+              />
+              <p className="mt-2 text-xs text-slate-500">Line 1 maps to item 1, line 2 maps to item 2, and so on.</p>
             </label>
 
             <label className="block">
@@ -332,18 +347,6 @@ export default function DispatchPage() {
               />
             </label>
 
-            <label className="block md:col-span-2">
-              <span className="text-sm font-semibold text-slate-700">Items</span>
-              <textarea
-                name="item"
-                rows={4}
-                value={form.item}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                placeholder="Enter one item per line as: Item Name | Tag Number | Serial Number"
-              />
-              <p className="mt-2 text-xs text-slate-500">Example: Laptop Bag | TG-1001 | SN-12345</p>
-            </label>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
