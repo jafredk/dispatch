@@ -114,8 +114,6 @@ export default function DispatchPage() {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;font-size:13px;line-height:1.45;margin-bottom:10px;">
             <div><strong>Dispatched By:</strong> ${escapeHtml(String(data.dispatchedBy || ''))}</div>
             <div><strong>Department:</strong> ${escapeHtml(String(data.departmentFrom || ''))}</div>
-            <div><strong>Serial No:</strong> ${escapeHtml(String(data.serialNumber || ''))}</div>
-            <div><strong>Tag No:</strong> ${escapeHtml(String(data.tagNumber || ''))}</div>
             <div><strong>Date:</strong> ${escapeHtml(String(data.dispatchDate || ''))}</div>
             <div><strong>Destination:</strong> ${escapeHtml(String(data.destination || ''))}</div>
           </div>
