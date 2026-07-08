@@ -39,9 +39,9 @@ export default function SearchPage() {
   const [results, setResults] = useState<DispatchRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState<DispatchRecord | null>(null)
-  const [gatepassHtml, setGatepassHtml] = useState<string>('')
   const [gatepassUrl, setGatepassUrl] = useState<string | null>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [isPdfZoomed, setIsPdfZoomed] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -60,7 +60,6 @@ export default function SearchPage() {
     if (!db) {
       setResults([])
       setSelectedRecord(null)
-      setGatepassHtml('')
       return
     }
     if (!searchTerm.trim()) {
@@ -84,17 +83,14 @@ export default function SearchPage() {
       setResults(filtered)
       setSelectedRecord(filtered[0] ?? null)
       if (filtered[0]) {
-        setGatepassHtml(buildGatepassHtml(filtered[0]))
         generateGatepassPdf(filtered[0])
       } else {
-        setGatepassHtml('')
         setGatepassUrl(null)
       }
     } catch (err) {
       console.error('Search error:', err)
       setResults([])
       setSelectedRecord(null)
-      setGatepassHtml('')
     } finally {
       setLoading(false)
     }
@@ -124,7 +120,7 @@ export default function SearchPage() {
       })
       document.body.appendChild(container)
 
-      const canvas = await (html2canvas as (el: HTMLElement, opts: Record<string, unknown>) => Promise<HTMLCanvasElement>)(container, { scale: 2, useCORS: true })
+      const canvas = await (html2canvas as (el: HTMLElement, opts: Record<string, unknown>) => Promise<HTMLCanvasElement>)(container, { scale: 1.35, useCORS: true })
       const imgData = canvas.toDataURL('image/png')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pdf = new (jsPDF as any)({ unit: 'px', format: 'a4' })
@@ -158,7 +154,6 @@ export default function SearchPage() {
 
   const handleSelect = (record: DispatchRecord) => {
     setSelectedRecord(record)
-    setGatepassHtml(buildGatepassHtml(record))
     generateGatepassPdf(record)
   }
 
@@ -191,6 +186,8 @@ export default function SearchPage() {
       }
     }
   }
+
+  const closeZoom = () => setIsPdfZoomed(false)
 
   useEffect(() => {
     return () => {
@@ -303,11 +300,6 @@ export default function SearchPage() {
                       <div><strong>Date:</strong> {selectedRecord.dispatchDate}</div>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-                    <div className="mb-3 text-sm font-semibold text-slate-900">Gatepass HTML Preview</div>
-                    <pre className="max-h-72 overflow-auto rounded-xl bg-slate-100 p-3 text-xs text-slate-700">{gatepassHtml}</pre>
-                  </div>
-
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -345,12 +337,19 @@ export default function SearchPage() {
                     {pdfLoading ? (
                       <div className="rounded-2xl bg-slate-100 p-4 text-sm text-slate-600">Generating PDF preview…</div>
                     ) : gatepassUrl ? (
-                      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
-                        <iframe
-                          src={gatepassUrl}
-                          className="h-[520px] w-full"
-                          title="Gatepass PDF Preview"
-                        />
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setIsPdfZoomed(true)}
+                          className="w-full overflow-hidden rounded-3xl border border-slate-200 bg-white text-left transition hover:border-slate-400"
+                        >
+                          <div className="border-b border-slate-100 px-4 py-2 text-xs text-slate-500">Click preview to magnify</div>
+                          <iframe
+                            src={gatepassUrl}
+                            className="h-[260px] w-full pointer-events-none"
+                            title="Gatepass PDF Preview"
+                          />
+                        </button>
                       </div>
                     ) : (
                       <div className="rounded-2xl bg-slate-100 p-4 text-sm text-slate-600">PDF preview will appear once a dispatch is selected.</div>
@@ -362,6 +361,34 @@ export default function SearchPage() {
           </div>
         </div>
       </div>
+
+      {isPdfZoomed && gatepassUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={closeZoom}
+        >
+          <div
+            className="w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <h3 className="text-sm font-semibold text-slate-900">Gatepass PDF (Magnified)</h3>
+              <button
+                type="button"
+                onClick={closeZoom}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-900 transition hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+            <iframe
+              src={gatepassUrl}
+              className="h-[80vh] w-full"
+              title="Gatepass PDF Magnified"
+            />
+          </div>
+        </div>
+      )}
     </main>
   )
 }
