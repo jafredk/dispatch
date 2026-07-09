@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { buildGatepassHtml as sharedBuildGatepassHtml, escapeHtml, renderItemsHtml, safeImport } from '@/lib/gatepass'
+import { buildGatepassHtml, escapeHtml, renderItemsHtml, safeImport } from '@/lib/gatepass'
 import LogoutButton from '@/components/LogoutButton'
 
 const initialValues = {
@@ -97,61 +97,22 @@ export default function DispatchPage() {
       container.style.padding = '28px'
       container.style.background = '#ffffff'
       container.style.color = '#111827'
+      const htmlString = buildGatepassHtml(data)
+      const parsed = new DOMParser().parseFromString(htmlString, 'text/html')
+      const container = document.createElement('div')
+      container.style.width = '760px'
+      container.style.padding = '28px'
+      container.style.background = '#ffffff'
+      container.style.color = '#111827'
       container.style.fontFamily = 'Arial, Helvetica, sans-serif'
-      container.innerHTML = `
-        <div style="position:relative;border:2px solid #0f766e;padding:24px 24px 20px;border-radius:14px;background:linear-gradient(180deg,#ffffff 0%,#f9fafb 100%);box-shadow:0 8px 30px rgba(15,23,42,0.08);overflow:hidden;">
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0.08;font-size:120px;font-weight:800;color:#0f766e;transform:rotate(-25deg);">COOP</div>
 
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid #0f766e;padding-bottom:10px;margin-bottom:14px;">
-            <div style="width:58px;height:58px;border-radius:50%;border:2px solid #0f766e;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#0f766e;background:#ecfeff;">CBK</div>
-            <div style="flex:1;text-align:center;">
-              <div style="font-size:17px;font-weight:700;color:#0f766e;letter-spacing:1px;">THE CO-OPERATIVE BANK OF KENYA LTD</div>
-              <div style="font-size:14px;font-weight:600;margin-top:4px;color:#374151;">GATEPASS / DISPATCH NOTE</div>
-            </div>
-            <div style="width:58px;height:58px;border-radius:50%;border:2px dashed #0f766e;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0f766e;text-align:center;line-height:1.1;">OFFICIAL</div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;font-size:13px;line-height:1.45;margin-bottom:10px;">
-            <div><strong>Dispatched By:</strong> ${escapeHtml(String(data.dispatchedBy || ''))}</div>
-            <div><strong>Department:</strong> ${escapeHtml(String(data.departmentFrom || ''))}</div>
-            <div><strong>Date:</strong> ${escapeHtml(String(data.dispatchDate || ''))}</div>
-            <div><strong>Destination:</strong> ${escapeHtml(String(data.destination || ''))}</div>
-          </div>
-
-          <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin:8px 0 10px;">
-            <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Items</div>
-            <div style="font-size:13px;line-height:1.55;">${renderItemsHtml(data.item, data.tagNumber, data.serialNumber)}</div>
-          </div>
-
-          <div style="border:1px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#fff;margin-bottom:10px;">
-            <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Reasons for Dispatch</div>
-            <div style="font-size:13px;white-space:pre-wrap;">${escapeHtml(String(data.reasons || ''))}</div>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;gap:16px;margin-top:12px;border-top:1px dashed #cbd5e1;padding-top:10px;">
-            <div style="flex:1;">
-              <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Authorizing Officer</div>
-              <div style="font-size:13px;">${escapeHtml(String(data.authorizingOfficer || ''))}</div>
-              <div style="margin-top:10px;line-height:1.4;">
-                <div style="font-size:12px;font-weight:700;color:#111827;">Signature</div>
-                <div style="width:160px;height:38px;border-top:1px solid #111827;margin-top:6px;"></div>
-              </div>
-            </div>
-            <div style="flex:1;">
-              <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">Confirmation Officer</div>
-              <div style="font-size:13px;">${escapeHtml(String(data.confirmationOfficer || ''))}</div>
-              <div style="margin-top:10px;line-height:1.4;">
-                <div style="font-size:12px;font-weight:700;color:#111827;">Signature</div>
-                <div style="width:160px;height:38px;border-top:1px solid #111827;margin-top:6px;"></div>
-              </div>
-            </div>
-          </div>
-
-          <div style="margin-top:12px;border-top:1px solid #e5e7eb;padding-top:10px;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;color:#6b7280;">
-            <div>Generated electronically • Print-ready gatepass</div>
-          </div>
-        </div>`
-
+      const style = parsed.querySelector('style')
+      if (style) {
+        container.appendChild(style.cloneNode(true))
+      }
+      Array.from(parsed.body.childNodes).forEach((node) => {
+        container.appendChild(node.cloneNode(true))
+      })
       document.body.appendChild(container)
 
       const canvas = await (html2canvas as (el: HTMLElement, opts: Record<string, unknown>) => Promise<HTMLCanvasElement>)(container, { scale: 2, useCORS: true })
@@ -185,9 +146,7 @@ export default function DispatchPage() {
     }
   }
 
-  const buildGatepassHtml = (data: Record<string, unknown>) => {
-    return sharedBuildGatepassHtml(data)
-  }
+  // The buildGatepassHtml is imported from the shared library
 
   // cleanup generated object URL on unmount or change
   useEffect(() => {
