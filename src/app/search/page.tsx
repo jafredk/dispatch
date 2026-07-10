@@ -102,7 +102,7 @@ export default function SearchPage() {
       const jsPdfModule = await safeImport('jspdf', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')
       const html2canvas = (await safeImport('html2canvas', 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js')) || (window as unknown as Record<string, unknown>).html2canvas
       const jsPDF = (jsPdfModule as Record<string, unknown>)?.jsPDF || ((jsPdfModule as Record<string, unknown>)?.default as Record<string, unknown>)?.jsPDF || (window as unknown as Record<string, unknown>).jsPDF || jsPdfModule
-      const htmlString = buildGatepassHtml(record)
+      const htmlString = buildGatepassHtml(record as unknown as Record<string, unknown>)
       const parsed = new DOMParser().parseFromString(htmlString, 'text/html')
       const container = document.createElement('div')
       container.style.width = '760px'

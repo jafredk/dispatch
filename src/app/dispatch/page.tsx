@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { buildGatepassHtml, escapeHtml, renderItemsHtml, safeImport } from '@/lib/gatepass'
+import { buildGatepassHtml, safeImport } from '@/lib/gatepass'
 import LogoutButton from '@/components/LogoutButton'
 
 const initialValues = {
@@ -92,11 +92,6 @@ export default function DispatchPage() {
       const jsPDF = (jsPdfModule as Record<string, unknown>)?.jsPDF || ((jsPdfModule as Record<string, unknown>)?.default as Record<string, unknown>)?.jsPDF || (window as unknown as Record<string, unknown>).jsPDF || jsPdfModule
 
       // Create a temporary element with gatepass markup
-      const container = document.createElement('div')
-      container.style.width = '760px'
-      container.style.padding = '28px'
-      container.style.background = '#ffffff'
-      container.style.color = '#111827'
       const htmlString = buildGatepassHtml(data)
       const parsed = new DOMParser().parseFromString(htmlString, 'text/html')
       const container = document.createElement('div')

@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Next.js
+.next/
+.env
+.env.local
+.env.*.local
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.coverage/
+.nyc_output/
+
+# Build
+dist/
+build/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Docker
+docker-compose.override.yml
+
+# Documentation
+README.md
+CHANGELOG.md
+
+# Misc
+.nvmrc
+.prettierrc
+.eslintrc*
+tsconfig.json
+next.config.js
+postcss.config.cjs
+tailwind.config.cjs
